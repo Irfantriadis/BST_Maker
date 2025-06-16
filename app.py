@@ -60,6 +60,17 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     }
+    
+    .bg-toggle-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 0.5rem 1rem;
+        font-weight: bold;
+        margin: 0.5rem 0;
+        width: 100%;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -267,22 +278,45 @@ class BST:
         if node.right:
             self._assign_positions(node.right, mid, right, level - 1)
 
-def create_tree_visualization(bst: BST) -> go.Figure:
-    """Buat visualisasi tree menggunakan Plotly"""
+def create_tree_visualization(bst: BST, dark_mode: bool = True) -> go.Figure:
+    """Buat visualisasi tree menggunakan Plotly dengan opsi background"""
+    
+    # Tentukan warna berdasarkan mode
+    if dark_mode:
+        bg_color = '#1e1e1e'
+        paper_bg = '#2d2d2d'
+        text_color = 'white'
+        edge_color = '#E0E0E0'
+        empty_text_color = '#cccccc'
+        title_color = '#ffffff'
+    else:
+        bg_color = 'white'
+        paper_bg = '#f8f9fa'
+        text_color = 'black'
+        edge_color = '#666666'
+        empty_text_color = '#666666'
+        title_color = '#2E4057'
+    
     if bst.root is None:
         fig = go.Figure()
         fig.add_annotation(
             text="🌳 Tree kosong - Tambahkan node pertama!",
             x=0.5, y=0.5,
             showarrow=False,
-            font=dict(size=20, color="gray")
+            font=dict(size=20, color=empty_text_color)
         )
         fig.update_layout(
-            title="Binary Search Tree Visualization",
+            title=dict(
+                text="🌳 Binary Search Tree Visualization",
+                font=dict(size=20, color=title_color)
+            ),
             showlegend=False,
-            height=400,
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)'
+            height=500,
+            paper_bgcolor=paper_bg,
+            plot_bgcolor=bg_color,
+            xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+            margin=dict(l=20, r=20, t=60, b=20)
         )
         return fig
     
@@ -325,7 +359,7 @@ def create_tree_visualization(bst: BST) -> go.Figure:
             x=[edge['x0'], edge['x1']],
             y=[edge['y0'], edge['y1']],
             mode='lines',
-            line=dict(color='#E0E0E0', width=2),
+            line=dict(color=edge_color, width=2),
             showlegend=False,
             hoverinfo='skip'
         ))
@@ -356,12 +390,12 @@ def create_tree_visualization(bst: BST) -> go.Figure:
     fig.update_layout(
         title=dict(
             text="🌳 Binary Search Tree Visualization",
-            font=dict(size=20, color='#2E4057')
+            font=dict(size=20, color=title_color)
         ),
         showlegend=False,
         height=500,
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor=paper_bg,
+        plot_bgcolor=bg_color,
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
         margin=dict(l=20, r=20, t=60, b=20)
@@ -386,6 +420,8 @@ def main():
         st.session_state.operation_history = []
     if 'allow_duplicates' not in st.session_state:
         st.session_state.allow_duplicates = False
+    if 'dark_mode' not in st.session_state:
+        st.session_state.dark_mode = True
     
     # Sidebar untuk kontrol
     with st.sidebar:
@@ -393,6 +429,26 @@ def main():
         
         # Pengaturan BST
         st.subheader("⚙️ Pengaturan")
+        
+        # Toggle untuk background canvas
+        st.markdown("#### 🎨 Background Canvas")
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("🌙 Dark", key="dark_mode_btn", help="Background gelap"):
+                st.session_state.dark_mode = True
+                st.rerun()
+        
+        with col2:
+            if st.button("☀️ Light", key="light_mode_btn", help="Background terang"):
+                st.session_state.dark_mode = False
+                st.rerun()
+        
+        # Status mode saat ini
+        mode_text = "🌙 Dark Mode" if st.session_state.dark_mode else "☀️ Light Mode"
+        st.info(f"Mode saat ini: {mode_text}")
+        
+        # Checkbox untuk duplikat
         new_allow_duplicates = st.checkbox("🔄 Izinkan Duplikat", value=st.session_state.allow_duplicates, 
                                           help="Jika dicentang, nilai yang sama bisa ditambahkan ke tree")
         
@@ -467,7 +523,7 @@ def main():
     with col1:
         # Visualisasi tree
         st.subheader("🎨 Visualisasi Tree")
-        fig = create_tree_visualization(st.session_state.bst)
+        fig = create_tree_visualization(st.session_state.bst, st.session_state.dark_mode)
         st.plotly_chart(fig, use_container_width=True)
         
         # Statistik BST
@@ -577,6 +633,10 @@ def main():
         - Pertimbangkan Self-Balancing BST (AVL, Red-Black) untuk dataset besar
         - Ideal untuk range queries dan ordered statistics
         - Aktifkan duplikat jika data Anda memiliki nilai berulang
+        
+        **Fitur Background:**
+        - 🌙 **Dark Mode**: Background gelap untuk kenyamanan mata
+        - ☀️ **Light Mode**: Background terang untuk presentasi yang lebih cerah
         """)
     
     # Credit
